@@ -2,7 +2,7 @@ en:
   site_settings:
     user_network_vis_enabled: "Enable the User Network Visualisation plugin"
     user_network_vis_canvas_height: "height of visualisation in pixels"
-    user_network_vis_node_radius: "Size of nodes in pixels"
+    user_network_vis_node_radius: "Size of node radii in pixels"
     user_network_vis_colors: "array of colours for nodes (default set is called 'Tableau10')"
     user_network_vis_node_charge_strength: "Level of repulsion between nodes.  Make it larger to spread nodes out"
     user_network_vis_minimum_trust_level: "Minimum Trust Level considered for stats gathering and display"

@@ -86,13 +86,13 @@ export default Ember.Component.extend({
           }
         });
 
-      var lables = node
+      var labels = node
         .append("text")
         .text((d) => {
           return d.id;
         })
-        .attr("x", 6)
-        .attr("y", 3);
+        .attr("x", Discourse.SiteSettings.user_network_vis_node_radius + 1)
+        .attr("y", (Discourse.SiteSettings.user_network_vis_node_radius/2) + 1);
 
       node
         .append("title")
