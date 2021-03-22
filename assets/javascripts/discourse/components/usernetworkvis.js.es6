@@ -20,8 +20,8 @@ export default Ember.Component.extend({
 
     this.ensureD3().then(() => {
       var width = 1120,
-        height = 840;
-
+        height = Discourse.SiteSettings.user_network_vis_render_height;
+debugger;
       var svg = d3
         .select(".user-network-vis")
         .append("svg")

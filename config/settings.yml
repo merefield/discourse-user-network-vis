@@ -1,4 +1,9 @@
 plugins:
+  user_network_vis_render_height:
+    default: 720
+    min: 500
+    max: 1600
+    client: true
   user_network_vis_enabled:
     type: bool
     default: true
@@ -14,4 +19,3 @@ plugins:
   user_network_vis_link_score_threshold:
     default: 0
     min: 0
-
