@@ -21,7 +21,7 @@ export default Ember.Component.extend({
     this.ensureD3().then(() => {
       var width = 1120,
         height = Discourse.SiteSettings.user_network_vis_render_height;
-debugger;
+
       var svg = d3
         .select(".user-network-vis")
         .append("svg")
@@ -38,7 +38,7 @@ debugger;
             return d.id;
           })
         )
-        .force("charge", d3.forceManyBody().strength(-100))
+        .force("charge", d3.forceManyBody().strength(-Discourse.SiteSettings.user_network_vis_node_charge_strength))
         .force("center", d3.forceCenter(width / 2, height / 2));
 
       var link = svg
