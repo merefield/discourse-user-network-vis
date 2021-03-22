@@ -20,7 +20,7 @@ export default Ember.Component.extend({
 
     this.ensureD3().then(() => {
       var width = 1120,
-        height = Discourse.SiteSettings.user_network_vis_render_height;
+        height = Discourse.SiteSettings.user_network_vis_canvas_height;
 
       var svg = d3
         .select(".user-network-vis")
@@ -28,7 +28,7 @@ export default Ember.Component.extend({
         .attr("width", width)
         .attr("height", height);
 
-      var color = d3.scaleOrdinal(d3.schemeAccent);
+      var color = d3.scaleOrdinal(Discourse.SiteSettings.user_network_vis_colors.split('|'));
 
       var simulation = d3
         .forceSimulation()
@@ -56,8 +56,7 @@ export default Ember.Component.extend({
         .enter()
         .append("line")
         .attr("stroke-width", (d) => {
-          //return 2
-          return Math.sqrt(Math.round(d.value / 20) + 1);
+          return Math.cbrt((Math.round(d.value) + 1));
         });
 
       var node = svg
@@ -70,7 +69,7 @@ export default Ember.Component.extend({
 
       var circles = node
         .append("circle")
-        .attr("r", 6)
+        .attr("r", Discourse.SiteSettings.user_network_vis_node_radius)
         .attr("fill", (d) => {
           return color(d.group + 1);
         })

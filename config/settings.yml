@@ -3,10 +3,19 @@ plugins:
     type: bool
     default: true
     client: true
-  user_network_vis_render_height:
+  user_network_vis_canvas_height:
     default: 720
     min: 500
     max: 1600
+    client: true
+  user_network_vis_node_radius:
+    default: 6
+    min: 3
+    max: 20
+    client: true
+  user_network_vis_colors:
+    default: "#4e79a7|#f28e2c|#e15759|#76b7b2|#59a14f|#edc949|#af7aa1|#ff9da7|#9c755f|#bab0ab"
+    type: list
     client: true
   user_network_vis_node_charge_strength:
     default: 100
