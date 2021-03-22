@@ -2,3 +2,5 @@ en:
   site_settings:
     user_network_vis_enabled: "Enable the User Network Visualisation plugin"
     user_network_vis_minimum_trust_level: "Minimum Trust Level considered for stats gathering and display"
+    user_network_vis_reply_multiplier: "Increase to increase the significance of replies versus likes in establishing link significance"
+    user_network_vis_link_score_threshold: "Minimum score considered to include a link"

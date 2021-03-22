@@ -7,3 +7,11 @@ plugins:
     default: 0
     max: 4
     min: 0
+  user_network_vis_reply_multiplier:
+    default: 2
+    max: 4
+    min: 1
+  user_network_vis_link_score_threshold:
+    default: 0
+    min: 0
+

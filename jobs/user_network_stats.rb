@@ -22,7 +22,7 @@ module Jobs
           AND (topics.category_id IS NULL OR topics.category_id IN (SELECT id FROM categories WHERE NOT read_restricted))
           AND user_actions.action_type = 2 GROUP BY user_actions.user_id, user_actions.acting_user_id ORDER BY COUNT(*) DESC)
           UNION
-          (SELECT posts.user_id as source_user_id, replies.user_id as target_user_id, count(*) as score
+          (SELECT posts.user_id as source_user_id, replies.user_id as target_user_id, count(*) * #{SiteSetting.user_network_vis_reply_multiplier} as score
           FROM posts INNER JOIN topics ON topics.deleted_at IS NULL AND topics.id = posts.topic_id AND (topics.archetype <> 'private_message')
           JOIN posts replies ON posts.topic_id = replies.topic_id AND posts.reply_to_post_number = replies.post_number
           WHERE posts.deleted_at IS NULL AND posts.user_id <> replies.user_id
@@ -50,7 +50,7 @@ module Jobs
         # unless already_exists.length > 0
 
         
-        if source_user.trust_level >= min_tl && target_user.trust_level >= min_tl
+        if source_user.trust_level >= min_tl && target_user.trust_level >= min_tl && entry.score > SiteSetting.user_network_vis_link_score_threshold
           user_network_link_list << {source: source_user.username_lower, target: target_user.username_lower, value: entry.score}
         end
       end
@@ -60,7 +60,7 @@ module Jobs
       user_network_list.each do |entry|
 
         user = User.find_by(id: entry)
-        
+
         if user.trust_level >= min_tl
           user_nodes << {id: user.username_lower, group: user.trust_level}
         end
