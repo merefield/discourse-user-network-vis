@@ -1,0 +1,5 @@
+plugins:
+  user_network_vis_enabled:
+    type: bool
+    default: true
+    client: true
