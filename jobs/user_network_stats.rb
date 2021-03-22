@@ -50,7 +50,7 @@ module Jobs
         # unless already_exists.length > 0
 
         
-        if source_user.trust_level >= min_tl && target_user.trust_level >= min_tl && entry.score > SiteSetting.user_network_vis_link_score_threshold
+        if source_user.trust_level >= min_tl && target_user.trust_level >= min_tl && entry.score >= SiteSetting.user_network_vis_link_score_threshold
           user_network_link_list << {source: source_user.username_lower, target: target_user.username_lower, value: entry.score}
         end
       end

@@ -38,7 +38,14 @@ export default Ember.Component.extend({
             return d.id;
           })
         )
-        .force("charge", d3.forceManyBody().strength(-Discourse.SiteSettings.user_network_vis_node_charge_strength))
+        .force(
+          "charge",
+          d3
+            .forceManyBody()
+            .strength(
+              -Discourse.SiteSettings.user_network_vis_node_charge_strength
+            )
+        )
         .force("center", d3.forceCenter(width / 2, height / 2));
 
       var link = svg
@@ -73,7 +80,12 @@ export default Ember.Component.extend({
             .on("start", dragstarted)
             .on("drag", dragged)
             .on("end", dragended)
-        );
+        )
+        .on("click", (event, d) => {
+          if (d.id) {
+            DiscourseURL.routeTo(`/u/${d.id}/summary`);
+          }
+        });
 
       var lables = node
         .append("text")
@@ -83,9 +95,11 @@ export default Ember.Component.extend({
         .attr("x", 6)
         .attr("y", 3);
 
-      node.append("title").text((d) => {
-        return d.id;
-      });
+      node
+        .append("title")
+        .text((d) => {
+          return d.id;
+        })
 
       simulation
         .nodes(_this.results.user_network_stats.nodes)
