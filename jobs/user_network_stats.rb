@@ -8,6 +8,8 @@ module Jobs
       user_network_list = []
       user_network_link_list = []
 
+      min_tl = SiteSetting.user_network_vis_minimum_trust_level
+
         build = DB.build <<-SQL
 
         select source_user_id, target_user_id, sum(score) as score from (
@@ -46,8 +48,11 @@ module Jobs
         # end
 
         # unless already_exists.length > 0
+
+        
+        if source_user.trust_level >= min_tl && target_user.trust_level >= min_tl
           user_network_link_list << {source: source_user.username_lower, target: target_user.username_lower, value: entry.score}
-        # end
+        end
       end
 
       user_nodes = []
@@ -55,8 +60,10 @@ module Jobs
       user_network_list.each do |entry|
 
         user = User.find_by(id: entry)
-        user_nodes << {id: user.username_lower, group: user.trust_level}
-
+        
+        if user.trust_level >= min_tl
+          user_nodes << {id: user.username_lower, group: user.trust_level}
+        end
       end 
 
       user_network_vis_list = {nodes: user_nodes, links: user_network_link_list}

@@ -1,3 +1,4 @@
 en:
   site_settings:
     user_network_vis_enabled: "Enable the User Network Visualisation plugin"
+    user_network_vis_minimum_trust_level: "Minimum Trust Level considered for stats gathering and display"

@@ -3,3 +3,7 @@ plugins:
     type: bool
     default: true
     client: true
+  user_network_vis_minimum_trust_level:
+    default: 0
+    max: 4
+    min: 0
