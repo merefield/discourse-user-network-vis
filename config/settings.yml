@@ -22,8 +22,8 @@ plugins:
     client: true
   user_network_vis_node_charge:
     default: 720
-    min: 500
-    max: 1600
+    min: 100
+    max: 2000
     client: true
   user_network_vis_minimum_trust_level:
     default: 0
