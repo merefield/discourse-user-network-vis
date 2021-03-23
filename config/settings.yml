@@ -18,11 +18,8 @@ plugins:
     type: list
     client: true
   user_network_vis_node_charge_strength:
-    default: 100
-    client: true
-  user_network_vis_node_charge:
-    default: 720
-    min: 100
+    default: 700
+    min: 10
     max: 2000
     client: true
   user_network_vis_minimum_trust_level:
