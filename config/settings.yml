@@ -14,7 +14,7 @@ plugins:
     max: 20
     client: true
   user_network_vis_colors:
-    default: "#4e79a7|#f28e2c|#e15759|#76b7b2|#59a14f|#edc949|#af7aa1|#ff9da7|#9c755f|#bab0ab"
+    default: "#4e79a7|#f28e2c|#e15759|#76b7b2|#59a14f"
     type: list
     client: true
   user_network_vis_node_charge_strength:
