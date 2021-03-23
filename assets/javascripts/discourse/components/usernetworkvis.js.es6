@@ -19,6 +19,22 @@ export default Ember.Component.extend({
     var _this = this;
 
     this.ensureD3().then(() => {
+
+    function fade(opacity) {
+        return function(d) {
+            // check all other nodes to see if they're connected
+            // to this one. if so, keep the opacity at 1, otherwise
+            // fade
+            node.style("opacity", function(o) {
+                return isConnected(d.currentTarget.__data__, o) ? 1 : opacity;
+            });
+            // also style link accordingly
+            link.style("opacity", function(o) {
+                return o.source.id === d.currentTarget.__data__.id || o.target.id === d.currentTarget.__data__.id ? 1 : opacity;
+            });
+        };
+    }
+
       var width = 1120,
         height = Discourse.SiteSettings.user_network_vis_canvas_height;
 
@@ -28,7 +44,9 @@ export default Ember.Component.extend({
         .attr("width", width)
         .attr("height", height);
 
-      var color = d3.scaleOrdinal(Discourse.SiteSettings.user_network_vis_colors.split('|'));
+      var color = d3.scaleOrdinal(
+        Discourse.SiteSettings.user_network_vis_colors.split("|")
+      );
 
       var simulation = d3
         .forceSimulation()
@@ -56,7 +74,7 @@ export default Ember.Component.extend({
         .enter()
         .append("line")
         .attr("stroke-width", (d) => {
-          return Math.cbrt((Math.round(d.value) + 1));
+          return Math.cbrt(Math.round(d.value) + 1);
         });
 
       var node = svg
@@ -65,7 +83,9 @@ export default Ember.Component.extend({
         .selectAll("g")
         .data(_this.results.user_network_stats.nodes)
         .enter()
-        .append("g");
+        .append("g")
+        .on("mouseover", fade(.1))
+        .on("mouseout", fade(1));
 
       var circles = node
         .append("circle")
@@ -84,7 +104,7 @@ export default Ember.Component.extend({
           if (d.id) {
             DiscourseURL.routeTo(`/u/${d.id}/summary`);
           }
-        });
+        })
 
       var labels = node
         .append("text")
@@ -92,19 +112,34 @@ export default Ember.Component.extend({
           return d.id;
         })
         .attr("x", Discourse.SiteSettings.user_network_vis_node_radius + 1)
-        .attr("y", (Discourse.SiteSettings.user_network_vis_node_radius/2) + 1);
+        .attr("y", Discourse.SiteSettings.user_network_vis_node_radius / 2 + 1);
 
-      node
-        .append("title")
-        .text((d) => {
-          return d.id;
-        })
+      node.append("title").text((d) => {
+        return d.id;
+      });
 
       simulation
         .nodes(_this.results.user_network_stats.nodes)
         .on("tick", ticked);
 
       simulation.force("link").links(_this.results.user_network_stats.links);
+
+      var linkedByIndex = {};
+
+      simulation
+        .force("link")
+        .links()
+        .forEach(function (d) {
+          linkedByIndex[d.source.index + "," + d.target.index] = 1;
+        });
+
+      function isConnected(a, b) {
+        return (
+          linkedByIndex[a.index + "," + b.index] ||
+          linkedByIndex[b.index + "," + a.index] ||
+          a.index == b.index
+        );
+      }
 
       function ticked() {
         link
