@@ -12,7 +12,7 @@ export default {
     withPluginApi('0.8.13', api => {
 
       api.decorateWidget("hamburger-menu:generalLinks", function(helper) {
-        return {href: "/usernetworkvis", rawLabel: "User Network"}
+        return {href: "/usernetworkvis", rawLabel: I18n.t('user_network_vis.hamburger_menu_label')}
       });
 
     });
