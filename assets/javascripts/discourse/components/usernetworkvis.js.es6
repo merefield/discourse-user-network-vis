@@ -20,23 +20,23 @@ export default Ember.Component.extend({
 
     this.ensureD3().then(() => {
 
-    function fade(opacity) {
-        return function(d) {
-            // check all other nodes to see if they're connected
-            // to this one. if so, keep the opacity at 1, otherwise
-            // fade
-            node.style("opacity", function(o) {
-                return isConnected(d.currentTarget.__data__, o) ? 1 : opacity;
-            });
-            // also style link accordingly
-            link.style("opacity", function(o) {
-                return o.source.id === d.currentTarget.__data__.id || o.target.id === d.currentTarget.__data__.id ? 1 : opacity;
-            });
+      function fade(opacity) {
+        return function (d) {
+          // check all other nodes to see if they're connected
+          // to this one. if so, keep the opacity at 1, otherwise
+          // fade
+          node.style("opacity", function (o) {
+            return isConnected(d.currentTarget.__data__, o) ? 1 : opacity;
+          });
+          // also style link accordingly
+          link.style("opacity", function (o) {
+            return o.source.id === d.currentTarget.__data__.id || o.target.id === d.currentTarget.__data__.id ? 1 : opacity;
+          });
         };
-    }
+      }
 
       var width = 1120,
-        height = Discourse.SiteSettings.user_network_vis_canvas_height;
+        height = _this.siteSettings.user_network_vis_canvas_height;
 
       var svg = d3
         .select(".user-network-vis")
@@ -45,7 +45,7 @@ export default Ember.Component.extend({
         .attr("height", height);
 
       var color = d3.scaleOrdinal(
-        Discourse.SiteSettings.user_network_vis_colors.split("|")
+        _this.siteSettings.user_network_vis_colors.split("|")
       );
 
       var simulation = d3
@@ -61,7 +61,7 @@ export default Ember.Component.extend({
           d3
             .forceManyBody()
             .strength(
-              -Discourse.SiteSettings.user_network_vis_node_charge_strength
+              -_this.siteSettings.user_network_vis_node_charge_strength
             )
         )
         .force("center", d3.forceCenter(width / 2, height / 2));
@@ -89,7 +89,7 @@ export default Ember.Component.extend({
 
       var circles = node
         .append("circle")
-        .attr("r", Discourse.SiteSettings.user_network_vis_node_radius)
+        .attr("r", _this.siteSettings.user_network_vis_node_radius)
         .attr("fill", (d) => {
           return color(d.group + 1);
         })
@@ -111,8 +111,8 @@ export default Ember.Component.extend({
         .text((d) => {
           return d.id;
         })
-        .attr("x", Discourse.SiteSettings.user_network_vis_node_radius + 1)
-        .attr("y", Discourse.SiteSettings.user_network_vis_node_radius / 2 + 1);
+        .attr("x", _this.siteSettings.user_network_vis_node_radius + 1)
+        .attr("y", _this.siteSettings.user_network_vis_node_radius / 2 + 1);
 
       node.append("title").text((d) => {
         return d.id;
