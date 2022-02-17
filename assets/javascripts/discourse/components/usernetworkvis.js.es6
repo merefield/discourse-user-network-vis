@@ -1,9 +1,12 @@
 import loadScript from "discourse/lib/load-script";
 import DiscourseURL from "discourse/lib/url";
+import { notEmpty } from "@ember/object/computed";
+import { observes } from 'discourse-common/utils/decorators';
 
 export default Ember.Component.extend({
   classNames: "user-network-vis",
   results: Ember.computed.alias("model.results"),
+  hasItems: notEmpty("results"),
 
   ensureD3() {
     return loadScript("/plugins/discourse-user-network-vis/d3/d3.min.js");
@@ -11,6 +14,15 @@ export default Ember.Component.extend({
 
   didInsertElement() {
     if (!this.site.mobileView) {
+      this.waitForData()
+    }
+  },
+
+  @observes("hasItems")
+  waitForData() {
+    if(!this.hasItems) {
+      return;
+    } else {
       this.setup();
     }
   },
