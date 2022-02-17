@@ -41,8 +41,7 @@ export default Ember.Component.extend({
       var svg = d3
         .select(".user-network-vis")
         .append("svg")
-        .attr("width", width)
-        .attr("height", height);
+        .attr("viewBox", `0 0 ${width} ${height}`)
 
       var color = d3.scaleOrdinal(
         _this.siteSettings.user_network_vis_colors.split("|")
