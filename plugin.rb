@@ -1,7 +1,7 @@
 # name: discourse-user-network-vis
 # about: Builds and displays a user network visualisation
 # email contacts: robert@thepavilion.io
-# version: 0.4
+# version: 0.5
 # authors: Robert Barrow
 # url: https://github.com/merefield/discourse-user-network-vis
 

@@ -45,8 +45,8 @@ module Jobs
         source_user = User.find_by(id: entry.source_user_id)
         target_user = User.find_by(id: entry.target_user_id)
 
-        source_user_in_scope = source_user.trust_level >= min_tl && source_user.last_seen_at > time_threshold
-        target_user_in_scope = target_user.trust_level >= min_tl && target_user.last_seen_at > time_threshold
+        source_user_in_scope = source_user.trust_level >= min_tl && source_user.last_seen_at && source_user.last_seen_at > time_threshold
+        target_user_in_scope = target_user.trust_level >= min_tl && target_user.last_seen_at && target_user.last_seen_at > time_threshold
 
         if source_user_in_scope && target_user_in_scope && entry.score >= SiteSetting.user_network_vis_link_score_threshold
           user_network_link_list << {source: source_user.username_lower, target: target_user.username_lower, value: entry.score}
@@ -59,7 +59,7 @@ module Jobs
 
         user = User.find_by(id: entry)
 
-        if user.trust_level >= min_tl && user.last_seen_at > time_threshold
+        if user.trust_level >= min_tl && user.last_seen_at && user.last_seen_at > time_threshold
           user_nodes << {id: user.username_lower, group: user.trust_level}
         end
       end 
