@@ -35,22 +35,20 @@ module Jobs
 
       result = build.query
 
+      time_threshold = Time.now - (SiteSetting.user_network_vis_maximum_last_seen_years).year
+
       result.each do |entry|
-      
+
         user_network_list |= [entry.source_user_id]
         user_network_list |= [entry.target_user_id]
 
         source_user = User.find_by(id: entry.source_user_id)
         target_user = User.find_by(id: entry.target_user_id)
-        
-        # already_exists = user_network_link_list.select do |item|
-        #   (item[:source] == target_user.username_lower && item[:target] == source_user.username_lower)
-        # end
 
-        # unless already_exists.length > 0
+        source_user_in_scope = source_user.trust_level >= min_tl && source_user.last_seen_at > time_threshold
+        target_user_in_scope = target_user.trust_level >= min_tl && target_user.last_seen_at > time_threshold
 
-        
-        if source_user.trust_level >= min_tl && target_user.trust_level >= min_tl && entry.score >= SiteSetting.user_network_vis_link_score_threshold
+        if source_user_in_scope && target_user_in_scope && entry.score >= SiteSetting.user_network_vis_link_score_threshold
           user_network_link_list << {source: source_user.username_lower, target: target_user.username_lower, value: entry.score}
         end
       end
@@ -61,7 +59,7 @@ module Jobs
 
         user = User.find_by(id: entry)
 
-        if user.trust_level >= min_tl
+        if user.trust_level >= min_tl && user.last_seen_at > time_threshold
           user_nodes << {id: user.username_lower, group: user.trust_level}
         end
       end 

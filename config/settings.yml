@@ -26,6 +26,9 @@ plugins:
     default: 0
     max: 4
     min: 0
+  user_network_vis_maximum_last_seen_years:
+    default: 10
+    min: 1
   user_network_vis_reply_multiplier:
     default: 2
     max: 4
