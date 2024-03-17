@@ -1,11 +1,12 @@
 import loadScript from "discourse/lib/load-script";
 import DiscourseURL from "discourse/lib/url";
-import { notEmpty } from "@ember/object/computed";
+import { notEmpty, alias } from "@ember/object/computed";
 import { observes } from 'discourse-common/utils/decorators';
+import Component from "@ember/component";
 
-export default Ember.Component.extend({
+export default Component.extend({
   classNames: "user-network-vis",
-  results: Ember.computed.alias("model.results"),
+  results: alias("model.results"),
   hasItems: notEmpty("results"),
 
   ensureD3() {
@@ -17,6 +18,14 @@ export default Ember.Component.extend({
       this.waitForData()
     }
   },
+
+  // addZoomBehavior() {
+  //   const svg = d3.select(".user-network-vis svg");
+  //   const zoom = d3.zoom().on("zoom", () => {
+  //     svg.attr("transform", d3.event.transform);
+  //   });
+  //   svg.call(zoom);
+  // },
 
   @observes("hasItems")
   waitForData() {
@@ -54,7 +63,16 @@ export default Ember.Component.extend({
         .select(".user-network-vis")
         .append("svg")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", height)
+        .call(d3.zoom().on("zoom", function () {
+            svg.attr("transform", d3.event.transform)
+         }))
+
+      var zoomBehavior = d3.zoom()
+        .scaleExtent([0.1, 10])
+        .on("zoom", zoomed);
+
+      svg.call(zoomBehavior);
 
       var color = d3.scaleOrdinal(
         _this.siteSettings.user_network_vis_colors.split("|")
@@ -144,6 +162,10 @@ export default Ember.Component.extend({
         .forEach(function (d) {
           linkedByIndex[d.source.index + "," + d.target.index] = 1;
         });
+
+      function zoomed(event) {
+        svg.attr("transform", `scale(${event.transform.k})`)
+      }
 
       function isConnected(a, b) {
         return (

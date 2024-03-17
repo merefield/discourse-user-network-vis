@@ -12,12 +12,16 @@ export default {
 
     if (!siteSettings.user_network_vis_enabled || !currentUser || isMobileDevice) return;
 
-    withPluginApi('0.8.13', api => {
+    withPluginApi('0.8.40', api => {
 
-      api.decorateWidget("hamburger-menu:generalLinks", function(helper) {
-        return {href: "/usernetworkvis", rawLabel: I18n.t('user_network_vis.hamburger_menu_label')}
-      });
-
+      if (siteSettings.user_network_vis_add_menu_item) {
+        api.addCommunitySectionLink({
+          name: "users network",
+          route: "usernetworkvis",
+          title: I18n.t("user_network_vis.sidebar_menu_label"),
+          text: I18n.t("user_network_vis.sidebar_menu_label"),
+        });
+      }
     });
   }
 };

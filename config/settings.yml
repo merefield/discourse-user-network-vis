@@ -3,6 +3,10 @@ plugins:
     type: bool
     default: true
     client: true
+  user_network_vis_add_menu_item:
+    type: bool
+    default: true
+    client: true
   user_network_vis_canvas_height:
     default: 720
     min: 500
