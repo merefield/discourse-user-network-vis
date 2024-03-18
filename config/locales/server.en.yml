@@ -1,6 +1,7 @@
 en:
   site_settings:
     user_network_vis_enabled: "Enable the User Network Visualisation plugin"
+    user_network_vis_add_menu_item: "Add a menu item to the Sidebar/Dropdown menu for the User Network Visualisation"
     user_network_vis_canvas_height: "height of visualisation in pixels"
     user_network_vis_node_radius: "Size of node radii in pixels"
     user_network_vis_colors: "array of colours for nodes (default set is called 'Tableau10')"
