@@ -19,14 +19,6 @@ export default Component.extend({
     }
   },
 
-  // addZoomBehavior() {
-  //   const svg = d3.select(".user-network-vis svg");
-  //   const zoom = d3.zoom().on("zoom", () => {
-  //     svg.attr("transform", d3.event.transform);
-  //   });
-  //   svg.call(zoom);
-  // },
-
   @observes("hasItems")
   waitForData() {
     if(!this.hasItems) {

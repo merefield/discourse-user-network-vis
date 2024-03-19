@@ -13,8 +13,4 @@ export default DiscourseRoute.extend({
       })
       .catch(popupAjaxError);
   },
-
-  // renderTemplate() {
-  //   this.render("usernetworkvis");
-  // },
 });
