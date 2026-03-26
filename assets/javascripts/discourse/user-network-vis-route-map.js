@@ -1,3 +1,3 @@
 export default function () {
-    this.route('usernetworkvis', { path: '/usernetworkvis'});
-};
+  this.route("usernetworkvis");
+}

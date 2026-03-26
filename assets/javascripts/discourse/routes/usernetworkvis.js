@@ -1,16 +1,11 @@
-import DiscourseRoute from "discourse/routes/discourse";
-import { popupAjaxError } from "discourse/lib/ajax-error";
 import { ajax } from "discourse/lib/ajax";
-import EmberObject from "@ember/object";
+import { popupAjaxError } from "discourse/lib/ajax-error";
+import DiscourseRoute from "discourse/routes/discourse";
 
-export default DiscourseRoute.extend({
-  model(data, transition) {
+export default class UsernetworkvisRoute extends DiscourseRoute {
+  model() {
     return ajax("/usernetworkvis.json")
-      .then((results) => {
-        return EmberObject.create({
-          results: results
-        });
-      })
+      .then((results) => ({ results }))
       .catch(popupAjaxError);
-  },
-});
+  }
+}

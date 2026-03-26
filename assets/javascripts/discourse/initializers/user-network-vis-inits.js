@@ -1,27 +1,32 @@
-import { withPluginApi } from 'discourse/lib/plugin-api';
-import {
-  getResolverOption,
-} from "discourse-common/resolver";
+import { withPluginApi } from "discourse/lib/plugin-api";
+import { getResolverOption } from "discourse/resolver";
+import { i18n } from "discourse-i18n";
 
 export default {
-  name: 'user-network-vis-inits',
-  initialize(container) {
-    const currentUser = container.lookup("current-user:main");
-    const siteSettings = container.lookup("site-settings:main");
+  name: "user-network-vis-inits",
+
+  initialize(owner) {
+    const currentUser = owner.lookup("service:current-user");
+    const siteSettings = owner.lookup("service:site-settings");
     const isMobileDevice = getResolverOption("mobileView");
 
-    if (!siteSettings.user_network_vis_enabled || !currentUser || isMobileDevice) return;
+    if (
+      !siteSettings.user_network_vis_enabled ||
+      !currentUser ||
+      isMobileDevice
+    ) {
+      return;
+    }
 
-    withPluginApi('0.8.40', api => {
-
+    withPluginApi((api) => {
       if (siteSettings.user_network_vis_add_menu_item) {
         api.addCommunitySectionLink({
           name: "users network",
           route: "usernetworkvis",
-          title: I18n.t("user_network_vis.sidebar_menu_label"),
-          text: I18n.t("user_network_vis.sidebar_menu_label"),
+          title: i18n("user_network_vis.sidebar_menu_label"),
+          text: i18n("user_network_vis.sidebar_menu_label"),
         });
       }
     });
-  }
+  },
 };
