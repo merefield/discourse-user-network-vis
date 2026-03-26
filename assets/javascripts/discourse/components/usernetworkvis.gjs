@@ -1,11 +1,11 @@
 import Component from "@glimmer/component";
 import didInsert from "@ember/render-modifiers/modifiers/did-insert";
 import { service } from "@ember/service";
+import { bind } from "discourse/lib/decorators";
 import loadScript from "discourse/lib/load-script";
 import DiscourseURL from "discourse/lib/url";
 
 export default class Usernetworkvis extends Component {
-  @service site;
   @service siteSettings;
 
   get network() {
@@ -22,8 +22,9 @@ export default class Usernetworkvis extends Component {
     return window.d3;
   }
 
+  @bind
   async setup(element) {
-    if (this.site.mobileView || !this.hasItems) {
+    if (!this.hasItems) {
       return;
     }
 
