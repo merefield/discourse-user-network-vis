@@ -1,7 +1,7 @@
 # name: discourse-user-network-vis
 # about: Builds and displays a user network visualisation
 # email contacts: merefield@gmail.com
-# version: 1.0
+# version: 1.1
 # authors: Robert Barrow
 # url: https://github.com/merefield/discourse-user-network-vis
 
