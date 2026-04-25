@@ -3,6 +3,59 @@
   height: auto;
   display: flex;
   justify-content: center;
+  position: relative;
+}
+
+.user-network-vis__toolbar {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  display: flex;
+  gap: 0.25rem;
+  padding-bottom: 0.35rem;
+}
+
+.user-network-vis__toggle {
+  border: 1px solid var(--primary-low-mid);
+  border-radius: 4px;
+  background: var(--secondary);
+  color: var(--primary);
+  line-height: var(--line-height-small);
+  padding: 0.35em 0.65em;
+}
+
+.user-network-vis__toggle--active {
+  background: var(--tertiary);
+  border-color: var(--tertiary);
+  box-shadow: 0 4px 0 var(--primary);
+  color: var(--secondary);
+}
+
+.user-network-vis {
+  position: relative;
+}
+
+.user-network-vis__3d-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.user-network-vis__3d-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--primary);
+  font-size: var(--font-down-1);
+  line-height: var(--line-height-small);
+  padding: 0.1em 0.25em;
+  text-shadow:
+    0 1px 2px var(--secondary),
+    0 -1px 2px var(--secondary),
+    1px 0 2px var(--secondary),
+    -1px 0 2px var(--secondary);
+  white-space: nowrap;
 }
 
 .links line {
