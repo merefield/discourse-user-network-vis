@@ -7,6 +7,13 @@ plugins:
     type: bool
     default: true
     client: true
+  user_network_vis_default_view:
+    type: enum
+    default: "3d"
+    choices:
+      - "2d"
+      - "3d"
+    client: true
   user_network_vis_canvas_height:
     default: 720
     min: 500
