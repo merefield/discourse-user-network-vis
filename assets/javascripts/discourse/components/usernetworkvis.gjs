@@ -3,6 +3,7 @@ import { tracked } from "@glimmer/tracking";
 import { concat } from "@ember/helper";
 import { on } from "@ember/modifier";
 import didInsert from "@ember/render-modifiers/modifiers/did-insert";
+import willDestroy from "@ember/render-modifiers/modifiers/will-destroy";
 import { service } from "@ember/service";
 import { bind } from "discourse/lib/decorators";
 import loadScript from "discourse/lib/load-script";
@@ -18,6 +19,10 @@ export default class Usernetworkvis extends Component {
   graph3D = null;
   graph3DLabelsElement = null;
   graph3DLabelFrameRequestId = null;
+  resizeFrameRequestId = null;
+  resizeObserver = null;
+  lastGraphWidth = null;
+  lastGraphHeight = null;
 
   get network() {
     return this.args.model?.results?.user_network_stats;
@@ -63,7 +68,25 @@ export default class Usernetworkvis extends Component {
   @bind
   async setup(element) {
     this.graphElement = element;
+    this.setupResizeObserver();
+    window.addEventListener("resize", this.scheduleRenderForResize);
     await this.renderGraph();
+  }
+
+  @bind
+  teardown() {
+    window.removeEventListener("resize", this.scheduleRenderForResize);
+
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+
+    if (this.resizeFrameRequestId) {
+      cancelAnimationFrame(this.resizeFrameRequestId);
+      this.resizeFrameRequestId = null;
+    }
+
+    this.resetGraph();
+    this.graphElement = null;
   }
 
   @bind
@@ -101,6 +124,49 @@ export default class Usernetworkvis extends Component {
     this.graphElement.replaceChildren();
   }
 
+  setupResizeObserver() {
+    this.resizeObserver?.disconnect();
+
+    this.resizeObserver = new ResizeObserver(this.scheduleRenderForResize);
+
+    this.resizeObserver.observe(this.graphElement);
+  }
+
+  @bind
+  scheduleRenderForResize() {
+    if (this.resizeFrameRequestId) {
+      cancelAnimationFrame(this.resizeFrameRequestId);
+    }
+
+    this.resizeFrameRequestId = requestAnimationFrame(async () => {
+      this.resizeFrameRequestId = null;
+
+      if (!this.graphElement) {
+        return;
+      }
+
+      const { width, height } = this.graphDimensions();
+
+      if (
+        Math.abs(width - this.lastGraphWidth) > 1 ||
+        Math.abs(height - this.lastGraphHeight) > 1
+      ) {
+        await this.renderGraph();
+      }
+    });
+  }
+
+  graphDimensions() {
+    const rect = this.graphElement.getBoundingClientRect();
+    const width = Math.max(320, Math.floor(rect.width));
+    const height = Math.max(320, Math.floor(window.innerHeight - rect.top));
+
+    return {
+      width,
+      height,
+    };
+  }
+
   cancel3DLabelUpdates() {
     if (this.graph3DLabelFrameRequestId) {
       cancelAnimationFrame(this.graph3DLabelFrameRequestId);
@@ -119,8 +185,10 @@ export default class Usernetworkvis extends Component {
 
     this.resetGraph();
 
-    const width = 1120;
-    const height = this.siteSettings.user_network_vis_canvas_height;
+    const { width, height } = this.graphDimensions();
+    this.lastGraphWidth = width;
+    this.lastGraphHeight = height;
+    this.graphElement.style.height = `${height}px`;
     const color = d3.scaleOrdinal(
       this.siteSettings.user_network_vis_colors.split("|")
     );
@@ -276,8 +344,10 @@ export default class Usernetworkvis extends Component {
 
     this.resetGraph();
 
-    const width = 1120;
-    const height = this.siteSettings.user_network_vis_canvas_height;
+    const { width, height } = this.graphDimensions();
+    this.lastGraphWidth = width;
+    this.lastGraphHeight = height;
+    this.graphElement.style.height = `${height}px`;
     const colors = this.siteSettings.user_network_vis_colors.split("|");
     const graphData = this.graphData();
     const nodeId = (node) => node?.id ?? node;
@@ -395,7 +465,11 @@ export default class Usernetworkvis extends Component {
           </button>
         </div>
 
-        <div class="user-network-vis" {{didInsert this.setup}}></div>
+        <div
+          class="user-network-vis"
+          {{didInsert this.setup}}
+          {{willDestroy this.teardown}}
+        ></div>
       </div>
     {{/if}}
   </template>

@@ -1,8 +1,9 @@
 .user-network-vis-container {
-  width: 100%;
-  height: auto;
+  width: 100vw;
   display: flex;
   justify-content: center;
+  margin-right: calc(50% - 50vw);
+  margin-left: calc(50% - 50vw);
   position: relative;
 }
 
@@ -33,6 +34,9 @@
 }
 
 .user-network-vis {
+  width: 100%;
+  min-height: 320px;
+  overflow: hidden;
   position: relative;
 }
 
