@@ -14,11 +14,6 @@ plugins:
       - "2d"
       - "3d"
     client: true
-  user_network_vis_canvas_height:
-    default: 720
-    min: 500
-    max: 1600
-    client: true
   user_network_vis_node_radius:
     default: 6
     min: 3
