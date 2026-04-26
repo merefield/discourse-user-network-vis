@@ -17,6 +17,7 @@ export default class Usernetworkvis extends Component {
   @tracked clusterByRelationships = false;
 
   graphElement = null;
+  currentGraphData = null;
   graph3D = null;
   graph3DLabelsElement = null;
   graph3DLabelFrameRequestId = null;
@@ -293,7 +294,17 @@ export default class Usernetworkvis extends Component {
   @bind
   async toggleRelationshipClusters() {
     this.clusterByRelationships = !this.clusterByRelationships;
-    await this.renderGraph();
+
+    if (!this.currentGraphData) {
+      await this.renderGraph();
+      return;
+    }
+
+    if (this.clusterByRelationships) {
+      this.applyRelationshipClusters(this.currentGraphData);
+    }
+
+    this.refreshNodeColors();
   }
 
   async renderGraph() {
@@ -316,7 +327,22 @@ export default class Usernetworkvis extends Component {
       this.graph3D = null;
     }
 
+    this.currentGraphData = null;
     this.graphElement.replaceChildren();
+  }
+
+  refreshNodeColors() {
+    if (this.is3D && this.graph3D) {
+      this.graph3D.nodeColor((node) =>
+        this.nodeColor(this.nodeColorIndex(node))
+      );
+      return;
+    }
+
+    window.d3
+      ?.select(this.graphElement)
+      .selectAll(".nodes circle")
+      .attr("fill", (data) => this.nodeColor(this.nodeColorIndex(data)));
   }
 
   setupResizeObserver() {
@@ -437,6 +463,7 @@ export default class Usernetworkvis extends Component {
     this.lastGraphHeight = height;
     this.graphElement.style.height = `${height}px`;
     const graphData = this.graphData();
+    this.currentGraphData = graphData;
 
     const svg = d3
       .select(this.graphElement)
@@ -599,6 +626,7 @@ export default class Usernetworkvis extends Component {
     this.lastGraphHeight = height;
     this.graphElement.style.height = `${height}px`;
     const graphData = this.graphData();
+    this.currentGraphData = graphData;
     const nodeId = (node) => node?.id ?? node;
     let hoveredNode = null;
     let hasFitGraph = false;
