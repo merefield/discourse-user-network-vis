@@ -67,6 +67,12 @@ export default class Usernetworkvis extends Component {
     };
   }
 
+  nodeColor(group) {
+    const colors = this.siteSettings.user_network_vis_colors.split("|");
+
+    return colors[((group ?? 0) + 1) % colors.length];
+  }
+
   @bind
   async setup(element) {
     this.graphElement = element;
@@ -243,9 +249,6 @@ export default class Usernetworkvis extends Component {
     this.lastGraphWidth = width;
     this.lastGraphHeight = height;
     this.graphElement.style.height = `${height}px`;
-    const color = d3.scaleOrdinal(
-      this.siteSettings.user_network_vis_colors.split("|")
-    );
     const graphData = this.graphData();
 
     const svg = d3
@@ -326,7 +329,7 @@ export default class Usernetworkvis extends Component {
     node
       .append("circle")
       .attr("r", this.siteSettings.user_network_vis_node_radius)
-      .attr("fill", (data) => color(data.group + 1))
+      .attr("fill", (data) => this.nodeColor(data.group))
       .call(
         d3
           .drag()
@@ -408,7 +411,6 @@ export default class Usernetworkvis extends Component {
     this.lastGraphWidth = width;
     this.lastGraphHeight = height;
     this.graphElement.style.height = `${height}px`;
-    const colors = this.siteSettings.user_network_vis_colors.split("|");
     const graphData = this.graphData();
     const nodeId = (node) => node?.id ?? node;
     let hoveredNode = null;
@@ -434,7 +436,7 @@ export default class Usernetworkvis extends Component {
       .showNavInfo(false)
       .nodeLabel("id")
       .nodeVal(this.siteSettings.user_network_vis_node_radius)
-      .nodeColor((node) => colors[((node.group ?? 0) + 1) % colors.length])
+      .nodeColor((node) => this.nodeColor(node.group))
       .linkWidth((link) => Math.cbrt(Math.round(link.value) + 1))
       .linkColor(linkColor)
       .linkOpacity(0.2)
