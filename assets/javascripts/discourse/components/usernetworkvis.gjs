@@ -5,6 +5,7 @@ import { on } from "@ember/modifier";
 import didInsert from "@ember/render-modifiers/modifiers/did-insert";
 import willDestroy from "@ember/render-modifiers/modifiers/will-destroy";
 import { service } from "@ember/service";
+import { trustHTML } from "@ember/template";
 import { bind } from "discourse/lib/decorators";
 import loadScript from "discourse/lib/load-script";
 import DiscourseURL from "discourse/lib/url";
@@ -42,6 +43,15 @@ export default class Usernetworkvis extends Component {
 
   get is3D() {
     return this.viewMode === "3d";
+  }
+
+  get trustLevelLegendItems() {
+    return [0, 1, 2, 3, 4].map((trustLevel) => {
+      return {
+        label: i18n("user_network_vis.trust_level", { trustLevel }),
+        style: trustHTML(`background-color: ${this.nodeColor(trustLevel)}`),
+      };
+    });
   }
 
   async ensureD3() {
@@ -724,44 +734,64 @@ export default class Usernetworkvis extends Component {
     {{#if this.hasItems}}
       <div class="user-network-vis-container">
         <div class="user-network-vis__toolbar">
-          <button
-            type="button"
-            class={{concat
-              "user-network-vis__toggle"
-              (if this.is2D " user-network-vis__toggle--active")
-            }}
-            aria-pressed={{this.is2D}}
-            {{on "click" this.show2D}}
+          <div
+            class="user-network-vis__toolbar-row user-network-vis__toolbar-row--dimensions"
           >
-            {{i18n "user_network_vis.view_2d"}}
-          </button>
+            <button
+              type="button"
+              class={{concat
+                "user-network-vis__toggle"
+                (if this.is2D " user-network-vis__toggle--active")
+              }}
+              aria-pressed={{this.is2D}}
+              {{on "click" this.show2D}}
+            >
+              {{i18n "user_network_vis.view_2d"}}
+            </button>
 
-          <button
-            type="button"
-            class={{concat
-              "user-network-vis__toggle"
-              (if this.is3D " user-network-vis__toggle--active")
-            }}
-            aria-pressed={{this.is3D}}
-            {{on "click" this.show3D}}
-          >
-            {{i18n "user_network_vis.view_3d"}}
-          </button>
+            <button
+              type="button"
+              class={{concat
+                "user-network-vis__toggle"
+                (if this.is3D " user-network-vis__toggle--active")
+              }}
+              aria-pressed={{this.is3D}}
+              {{on "click" this.show3D}}
+            >
+              {{i18n "user_network_vis.view_3d"}}
+            </button>
+          </div>
 
-          <button
-            type="button"
-            class={{concat
-              "user-network-vis__toggle"
-              (if
-                this.clusterByRelationships " user-network-vis__toggle--active"
-              )
-            }}
-            aria-pressed={{this.clusterByRelationships}}
-            title={{i18n "user_network_vis.cluster_by_relationships_title"}}
-            {{on "click" this.toggleRelationshipClusters}}
-          >
-            {{i18n "user_network_vis.cluster_by_relationships"}}
-          </button>
+          <div class="user-network-vis__toolbar-row">
+            <button
+              type="button"
+              class="user-network-vis__toggle"
+              aria-pressed={{this.clusterByRelationships}}
+              title={{i18n "user_network_vis.colours_title"}}
+              {{on "click" this.toggleRelationshipClusters}}
+            >
+              {{i18n "user_network_vis.colours"}}:
+              {{#if this.clusterByRelationships}}
+                {{i18n "user_network_vis.cluster_by_relationships"}}
+              {{else}}
+                {{i18n "user_network_vis.trust_level_colours"}}
+              {{/if}}
+            </button>
+          </div>
+
+          {{#unless this.clusterByRelationships}}
+            <div class="user-network-vis__legend">
+              {{#each this.trustLevelLegendItems as |item|}}
+                <div class="user-network-vis__legend-item">
+                  <span
+                    class="user-network-vis__legend-swatch"
+                    style={{item.style}}
+                  ></span>
+                  <span>{{item.label}}</span>
+                </div>
+              {{/each}}
+            </div>
+          {{/unless}}
         </div>
 
         <div
