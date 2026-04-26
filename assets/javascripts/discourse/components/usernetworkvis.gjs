@@ -67,10 +67,12 @@ export default class Usernetworkvis extends Component {
     };
   }
 
-  nodeColor(group) {
-    const colors = this.siteSettings.user_network_vis_colors.split("|");
+  nodeColor(trustLevel) {
+    const normalizedTrustLevel = Math.max(0, Math.min(4, trustLevel ?? 0));
 
-    return colors[((group ?? 0) + 1) % colors.length];
+    return this.siteSettings[
+      `user_network_vis_trust_level_${normalizedTrustLevel}_color`
+    ];
   }
 
   @bind

@@ -19,9 +19,30 @@ plugins:
     min: 3
     max: 20
     client: true
-  user_network_vis_colors:
-    default: "#4e79a7|#f28e2c|#e15759|#76b7b2|#59a14f"
-    type: list
+  user_network_vis_trust_level_0_color:
+    default: "#4e79a7"
+    type: color
+    validator: "CssColorValidator"
+    client: true
+  user_network_vis_trust_level_1_color:
+    default: "#f28e2c"
+    type: color
+    validator: "CssColorValidator"
+    client: true
+  user_network_vis_trust_level_2_color:
+    default: "#e15759"
+    type: color
+    validator: "CssColorValidator"
+    client: true
+  user_network_vis_trust_level_3_color:
+    default: "#76b7b2"
+    type: color
+    validator: "CssColorValidator"
+    client: true
+  user_network_vis_trust_level_4_color:
+    default: "#59a14f"
+    type: color
+    validator: "CssColorValidator"
     client: true
   user_network_vis_node_charge_strength:
     default: 700
