@@ -4,3 +4,5 @@ en:
       sidebar_menu_label: "User Network"
       view_2d: "2D"
       view_3d: "3D"
+      cluster_by_relationships: "Clusters"
+      cluster_by_relationships_title: "Colour nodes by relationship clusters instead of trust level"

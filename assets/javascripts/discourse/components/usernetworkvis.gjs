@@ -14,6 +14,7 @@ export default class Usernetworkvis extends Component {
   @service siteSettings;
 
   @tracked viewMode = this.siteSettings.user_network_vis_default_view;
+  @tracked clusterByRelationships = false;
 
   graphElement = null;
   graph3D = null;
@@ -57,7 +58,7 @@ export default class Usernetworkvis extends Component {
   }
 
   graphData() {
-    return {
+    const graphData = {
       nodes: this.network.nodes.map((node) => ({ ...node })),
       links: this.network.links.map((link) => ({
         ...link,
@@ -65,14 +66,192 @@ export default class Usernetworkvis extends Component {
         target: link.target?.id ?? link.target,
       })),
     };
+
+    if (this.clusterByRelationships) {
+      this.applyRelationshipClusters(graphData);
+    }
+
+    return graphData;
   }
 
-  nodeColor(trustLevel) {
-    const normalizedTrustLevel = Math.max(0, Math.min(4, trustLevel ?? 0));
+  nodeColor(colorIndex) {
+    const normalizedColorIndex = Math.max(0, Math.min(4, colorIndex ?? 0));
 
     return this.siteSettings[
-      `user_network_vis_trust_level_${normalizedTrustLevel}_color`
+      `user_network_vis_trust_level_${normalizedColorIndex}_color`
     ];
+  }
+
+  nodeColorIndex(node) {
+    return this.clusterByRelationships ? (node.cluster ?? 0) : node.group;
+  }
+
+  applyRelationshipClusters(graphData) {
+    const communities = this.detectLouvainCommunities(graphData);
+    const communityWeights = new Map();
+    const topCommunities = new Map();
+
+    graphData.nodes.forEach((node) => {
+      const community = communities.get(node.id) ?? node.id;
+      communityWeights.set(
+        community,
+        (communityWeights.get(community) ?? 0) + 1
+      );
+    });
+
+    [...communityWeights.entries()]
+      .sort((first, second) => second[1] - first[1])
+      .slice(0, 5)
+      .forEach(([community], index) => topCommunities.set(community, index));
+
+    graphData.nodes.forEach((node) => {
+      const community = communities.get(node.id) ?? node.id;
+      node.cluster =
+        topCommunities.get(community) ??
+        this.closestClusterIndex(
+          node.id,
+          graphData.links,
+          communities,
+          topCommunities
+        );
+    });
+  }
+
+  closestClusterIndex(nodeId, links, communities, topCommunities) {
+    const weightsByCluster = new Map();
+
+    links.forEach((link) => {
+      const source = link.source?.id ?? link.source;
+      const target = link.target?.id ?? link.target;
+
+      if (source !== nodeId && target !== nodeId) {
+        return;
+      }
+
+      const neighborId = source === nodeId ? target : source;
+      const neighborCommunity = communities.get(neighborId) ?? neighborId;
+      const clusterIndex = topCommunities.get(neighborCommunity);
+
+      if (clusterIndex === undefined) {
+        return;
+      }
+
+      weightsByCluster.set(
+        clusterIndex,
+        (weightsByCluster.get(clusterIndex) ?? 0) + Number(link.value || 1)
+      );
+    });
+
+    return (
+      [...weightsByCluster.entries()].sort(
+        (first, second) => second[1] - first[1]
+      )[0]?.[0] ?? 0
+    );
+  }
+
+  detectLouvainCommunities(graphData) {
+    const adjacency = new Map();
+    const degree = new Map();
+    const communities = new Map();
+    const communityTotals = new Map();
+    let totalWeight = 0;
+
+    graphData.nodes.forEach((node) => {
+      adjacency.set(node.id, new Map());
+      degree.set(node.id, 0);
+      communities.set(node.id, node.id);
+      communityTotals.set(node.id, 0);
+    });
+
+    graphData.links.forEach((link) => {
+      const source = link.source?.id ?? link.source;
+      const target = link.target?.id ?? link.target;
+      const weight = Number(link.value || 1);
+
+      if (
+        !adjacency.has(source) ||
+        !adjacency.has(target) ||
+        source === target
+      ) {
+        return;
+      }
+
+      adjacency
+        .get(source)
+        .set(target, (adjacency.get(source).get(target) ?? 0) + weight);
+      adjacency
+        .get(target)
+        .set(source, (adjacency.get(target).get(source) ?? 0) + weight);
+      degree.set(source, degree.get(source) + weight);
+      degree.set(target, degree.get(target) + weight);
+      totalWeight += weight;
+    });
+
+    degree.forEach((nodeDegree, nodeId) => {
+      communityTotals.set(nodeId, nodeDegree);
+    });
+
+    if (totalWeight === 0) {
+      return communities;
+    }
+
+    for (let pass = 0; pass < 20; pass++) {
+      let moved = false;
+
+      for (const node of graphData.nodes) {
+        const nodeId = node.id;
+        const nodeDegree = degree.get(nodeId);
+        const currentCommunity = communities.get(nodeId);
+        const neighborCommunityWeights = new Map();
+
+        adjacency.get(nodeId).forEach((weight, neighborId) => {
+          const community = communities.get(neighborId);
+          neighborCommunityWeights.set(
+            community,
+            (neighborCommunityWeights.get(community) ?? 0) + weight
+          );
+        });
+
+        communityTotals.set(
+          currentCommunity,
+          communityTotals.get(currentCommunity) - nodeDegree
+        );
+
+        let bestCommunity = currentCommunity;
+        let bestGain = 0;
+
+        for (const [
+          community,
+          weightToCommunity,
+        ] of neighborCommunityWeights.entries()) {
+          const gain =
+            weightToCommunity -
+            (nodeDegree * (communityTotals.get(community) ?? 0)) /
+              (2 * totalWeight);
+
+          if (gain > bestGain) {
+            bestGain = gain;
+            bestCommunity = community;
+          }
+        }
+
+        communityTotals.set(
+          bestCommunity,
+          (communityTotals.get(bestCommunity) ?? 0) + nodeDegree
+        );
+
+        if (bestCommunity !== currentCommunity) {
+          communities.set(nodeId, bestCommunity);
+          moved = true;
+        }
+      }
+
+      if (!moved) {
+        break;
+      }
+    }
+
+    return communities;
   }
 
   @bind
@@ -108,6 +287,12 @@ export default class Usernetworkvis extends Component {
   @bind
   async show3D() {
     this.viewMode = "3d";
+    await this.renderGraph();
+  }
+
+  @bind
+  async toggleRelationshipClusters() {
+    this.clusterByRelationships = !this.clusterByRelationships;
     await this.renderGraph();
   }
 
@@ -331,7 +516,7 @@ export default class Usernetworkvis extends Component {
     node
       .append("circle")
       .attr("r", this.siteSettings.user_network_vis_node_radius)
-      .attr("fill", (data) => this.nodeColor(data.group))
+      .attr("fill", (data) => this.nodeColor(this.nodeColorIndex(data)))
       .call(
         d3
           .drag()
@@ -438,7 +623,7 @@ export default class Usernetworkvis extends Component {
       .showNavInfo(false)
       .nodeLabel("id")
       .nodeVal(this.siteSettings.user_network_vis_node_radius)
-      .nodeColor((node) => this.nodeColor(node.group))
+      .nodeColor((node) => this.nodeColor(this.nodeColorIndex(node)))
       .linkWidth((link) => Math.cbrt(Math.round(link.value) + 1))
       .linkColor(linkColor)
       .linkOpacity(0.2)
@@ -533,6 +718,21 @@ export default class Usernetworkvis extends Component {
             {{on "click" this.show3D}}
           >
             {{i18n "user_network_vis.view_3d"}}
+          </button>
+
+          <button
+            type="button"
+            class={{concat
+              "user-network-vis__toggle"
+              (if
+                this.clusterByRelationships " user-network-vis__toggle--active"
+              )
+            }}
+            aria-pressed={{this.clusterByRelationships}}
+            title={{i18n "user_network_vis.cluster_by_relationships_title"}}
+            {{on "click" this.toggleRelationshipClusters}}
+          >
+            {{i18n "user_network_vis.cluster_by_relationships"}}
           </button>
         </div>
 
