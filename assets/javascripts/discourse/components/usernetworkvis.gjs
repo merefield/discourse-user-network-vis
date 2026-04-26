@@ -23,6 +23,8 @@ export default class Usernetworkvis extends Component {
   resizeObserver = null;
   lastGraphWidth = null;
   lastGraphHeight = null;
+  graphFitPadding = 96;
+  graph3DFitPadding = 4;
 
   get network() {
     return this.args.model?.results?.user_network_stats;
@@ -167,6 +169,58 @@ export default class Usernetworkvis extends Component {
     };
   }
 
+  graphBounds(nodes, dimensions = ["x", "y"]) {
+    const bounds = Object.fromEntries(
+      dimensions.flatMap((dimension) => [
+        [`min${dimension}`, Infinity],
+        [`max${dimension}`, -Infinity],
+      ])
+    );
+
+    nodes.forEach((node) => {
+      dimensions.forEach((dimension) => {
+        bounds[`min${dimension}`] = Math.min(
+          bounds[`min${dimension}`],
+          node[dimension]
+        );
+        bounds[`max${dimension}`] = Math.max(
+          bounds[`max${dimension}`],
+          node[dimension]
+        );
+      });
+    });
+
+    return dimensions.some(
+      (dimension) => !Number.isFinite(bounds[`min${dimension}`])
+    )
+      ? null
+      : bounds;
+  }
+
+  fit2DGraph(d3, svg, zoomBehavior, nodes, width, height) {
+    const bounds = this.graphBounds(nodes);
+
+    if (!bounds) {
+      return;
+    }
+
+    const graphWidth = Math.max(1, bounds.maxx - bounds.minx);
+    const graphHeight = Math.max(1, bounds.maxy - bounds.miny);
+    const paddedWidth = Math.max(1, width - this.graphFitPadding * 2);
+    const paddedHeight = Math.max(1, height - this.graphFitPadding * 2);
+    const scale = Math.max(
+      0.1,
+      Math.min(10, paddedWidth / graphWidth, paddedHeight / graphHeight)
+    );
+    const centerX = (bounds.minx + bounds.maxx) / 2;
+    const centerY = (bounds.miny + bounds.maxy) / 2;
+    const transform = d3.zoomIdentity
+      .translate(width / 2 - centerX * scale, height / 2 - centerY * scale)
+      .scale(scale);
+
+    svg.call(zoomBehavior.transform, transform);
+  }
+
   cancel3DLabelUpdates() {
     if (this.graph3DLabelFrameRequestId) {
       cancelAnimationFrame(this.graph3DLabelFrameRequestId);
@@ -294,7 +348,7 @@ export default class Usernetworkvis extends Component {
 
     node.append("title").text((data) => data.id);
 
-    simulation.nodes(graphData.nodes).on("tick", () => {
+    const updatePositions = () => {
       link
         .attr("x1", (data) => data.source.x)
         .attr("y1", (data) => data.source.y)
@@ -302,7 +356,9 @@ export default class Usernetworkvis extends Component {
         .attr("y2", (data) => data.target.y);
 
       node.attr("transform", (data) => `translate(${data.x},${data.y})`);
-    });
+    };
+
+    simulation.nodes(graphData.nodes).on("tick", updatePositions);
 
     simulation.force("link").links(graphData.links);
 
@@ -312,6 +368,10 @@ export default class Usernetworkvis extends Component {
       .forEach((data) => {
         linkedByIndex[`${data.source.index},${data.target.index}`] = 1;
       });
+
+    simulation.tick(300);
+    updatePositions();
+    this.fit2DGraph(d3, svg, zoomBehavior, graphData.nodes, width, height);
 
     function dragstarted(event, data) {
       if (!event.active) {
@@ -352,6 +412,7 @@ export default class Usernetworkvis extends Component {
     const graphData = this.graphData();
     const nodeId = (node) => node?.id ?? node;
     let hoveredNode = null;
+    let hasFitGraph = false;
     const isAttachedToHoveredNode = (link) => {
       return (
         !hoveredNode ||
@@ -380,6 +441,12 @@ export default class Usernetworkvis extends Component {
       .onNodeHover((node) => {
         hoveredNode = node;
         graph.linkColor(linkColor);
+      })
+      .onEngineStop(() => {
+        if (!hasFitGraph) {
+          hasFitGraph = true;
+          graph.zoomToFit(400, this.graph3DFitPadding);
+        }
       })
       .onNodeClick((node) => {
         if (node.id) {
