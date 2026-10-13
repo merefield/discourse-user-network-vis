@@ -11,10 +11,8 @@ enabled_site_setting :user_network_vis_enabled
 
 register_asset "stylesheets/common.scss"
 
-after_initialize do
-  require_relative "lib/engine"
-  require_relative "jobs/user_network_stats"
-  require_relative "app/jobs/onceoff/create_user_network_explorer_queries"
-  require_relative "app/controllers/user_network_stats"
-  require_relative "config/routes"
+module ::UserNetworkVis
+  PLUGIN_NAME = "user_network_vis"
 end
+
+require_relative "lib/user_network_vis/engine"

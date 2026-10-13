@@ -26,6 +26,17 @@ RSpec.describe UserNetworkVis::UserNetworkStatsController do
       expect(response.status).to eq(403)
     end
 
+    it "keeps the endpoint accessible after repeated route reloads" do
+      sign_in(user)
+
+      2.times do
+        Rails.application.reload_routes!
+        get "/usernetworkvis.json"
+
+        expect(response.status).to eq(200)
+      end
+    end
+
     it "rejects signed-in access when the plugin is disabled" do
       sign_in(user)
       SiteSetting.user_network_vis_enabled = false

@@ -189,6 +189,28 @@ This installs missing query definitions without rebuilding the graph. The SQL
 sources are in `queries/`; changing those files does not overwrite installed
 queries.
 
+## Ruby loading
+
+The engine is loaded during plugin setup; Rails loads routes and Zeitwerk manages
+the namespaced controller and job files. The engine's `to_prepare` hook eagerly
+loads `app/jobs/scheduled` so the hourly calculation is registered on boot and
+after development reloads. Keep Ruby filenames aligned with their constants
+instead of adding manual requires in `after_initialize`.
+
+`UserNetworkVis::PLUGIN_NAME` remains `user_network_vis`, preserving the existing
+PluginStore snapshot and installed-query records. Job class names and the
+`/usernetworkvis` endpoint are unchanged.
+
+From a Discourse checkout with the plugin installed:
+
+```sh
+LOAD_PLUGINS=1 RAILS_ENV=test bin/rails zeitwerk:check
+LOAD_PLUGINS=1 bin/rspec plugins/discourse-user-network-vis/spec
+```
+
+The engine spec additionally checks the plugin's `lib` directory, which Rails'
+standard eager-loading check may omit.
+
 ## Discuss the plugin
 
 Questions, feedback and support:
