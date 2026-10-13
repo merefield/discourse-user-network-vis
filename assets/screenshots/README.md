@@ -11,6 +11,11 @@ It runs the real `Jobs::UserNetworkStatsCalc` calculation before opening the
 page as a signed-in member. The test database cleanup removes the fixtures.
 Force-directed layouts can vary between captures.
 
+The system suite also exercises both renderers at a 390 x 844 mobile viewport.
+Desktop and mobile tests inspect pixels from screenshots of the renderer itself
+(excluding the separate 3D label overlay), so an empty WebGL canvas fails even
+when username labels are present. The committed gallery remains desktop-only.
+
 | File                   | View                                             |
 | ---------------------- | ------------------------------------------------ |
 | `network-3d.png`       | 3D, trust-level colours and legend.              |

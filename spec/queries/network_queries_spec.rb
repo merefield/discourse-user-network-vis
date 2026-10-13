@@ -90,6 +90,46 @@ RSpec.describe UserNetworkVis do
     ).to be_empty
   end
 
+  it "excludes likes and replies involving whispers" do
+    whisperers = Fabricate(:group, users: [new_user, partner])
+    SiteSetting.whispers_allowed_groups = whisperers.id.to_s
+    original = Fabricate(:post, user: new_user)
+    whisper = Fabricate(:whisper, topic: original.topic, user: new_user)
+    UserAction.create!(
+      action_type: UserAction::WAS_LIKED,
+      user_id: new_user.id,
+      acting_user_id: partner.id,
+      target_post_id: whisper.id,
+      target_topic_id: whisper.topic_id,
+    )
+    Fabricate(
+      :whisper,
+      topic: whisper.topic,
+      user: partner,
+      acting_user: partner,
+      reply_to_post_number: whisper.post_number,
+    )
+    Fabricate(
+      :post,
+      topic: original.topic,
+      user: partner,
+      reply_to_post_number: original.post_number,
+      post_type: Post.types[:whisper],
+    )
+
+    expect(run_query("new_user_interactions", minimum_interactions: 1)).to be_empty
+
+    Fabricate(
+      :post,
+      topic: original.topic,
+      user: partner,
+      reply_to_post_number: original.post_number,
+    )
+    rows = run_query("new_user_interactions", minimum_interactions: 1)
+    expect(rows.map(&:user_id)).to eq([new_user.id])
+    expect(rows.first.total_interactions).to eq(1)
+  end
+
   it "excludes restricted, deleted, hidden, old and self interactions" do
     private_category = Fabricate(:private_category, group: Fabricate(:group))
     topics = [

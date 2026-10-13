@@ -112,7 +112,7 @@ without group sharing:
 
 The review query reports incoming and outgoing interactions, reciprocity and
 the strongest counterpart. It excludes private messages, restricted categories,
-hidden/deleted posts, self-interactions and staff candidates. Data Explorer's
+whispers and other non-regular posts, hidden/deleted posts, self-interactions and staff candidates. Data Explorer's
 existing permissions control access.
 
 **This is an investigation aid, not a sock-puppet detector.** Concentrated

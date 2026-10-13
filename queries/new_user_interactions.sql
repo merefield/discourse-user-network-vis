@@ -12,6 +12,7 @@ WITH public_posts AS NOT MATERIALIZED (
   JOIN topics ON topics.id = posts.topic_id
   LEFT JOIN categories ON categories.id = topics.category_id
   WHERE posts.deleted_at IS NULL AND NOT posts.hidden
+    AND posts.post_type = 1
     AND topics.deleted_at IS NULL AND topics.visible
     AND topics.archetype <> 'private_message'
     AND (topics.category_id IS NULL OR NOT categories.read_restricted)

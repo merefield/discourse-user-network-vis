@@ -57,6 +57,41 @@ module PageObjects
           JS
         end
       end
+
+      def has_rendered_pixels?(dimensions)
+        selector = dimensions == "3D" ? ".user-network-vis canvas" : ".user-network-vis svg"
+        page.driver.with_playwright_page do |browser|
+          # Screenshot the renderer alone: DOM labels must not mask a blank WebGL canvas.
+          png =
+            browser.locator(selector).screenshot(
+              style:
+                ".user-network-vis__3d-labels, .user-network-vis__toolbar { visibility: hidden !important; }",
+            )
+          browser.evaluate(<<~JS, arg: "data:image/png;base64,#{Base64.strict_encode64(png)}")
+            async (source) => {
+              const image = new Image();
+              image.src = source;
+              await image.decode();
+              const canvas = document.createElement('canvas');
+              canvas.width = image.width;
+              canvas.height = image.height;
+              const context = canvas.getContext('2d');
+              context.drawImage(image, 0, 0);
+              const pixels = context.getImageData(0, 0, image.width, image.height).data;
+              const colours = new Set();
+              for (let offset = 0; offset < pixels.length; offset += 4) {
+                if (pixels[offset + 3] > 0) {
+                  colours.add(`${pixels[offset]},${pixels[offset + 1]},${pixels[offset + 2]}`);
+                }
+                if (colours.size > 20) {
+                  return true;
+                }
+              }
+              return false;
+            }
+          JS
+        end
+      end
     end
   end
 end

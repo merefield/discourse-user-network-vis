@@ -72,7 +72,11 @@ RSpec.describe "Explore the user network" do
     users.first.update!(uploaded_avatar_id: avatar.id)
     sign_in(users.first)
     page.driver.with_playwright_page do |browser|
-      browser.set_viewport_size(width: 1440, height: 1200)
+      if RSpec.current_example.metadata[:mobile]
+        browser.set_viewport_size(width: 390, height: 844)
+      else
+        browser.set_viewport_size(width: 1440, height: 1200)
+      end
     end
   end
 
@@ -80,11 +84,13 @@ RSpec.describe "Explore the user network" do
     network.open
     expect(network).to have_graph("3D")
     network.wait_for_layout
+    expect(network).to have_rendered_pixels("3D")
     screenshot_marker(label: "user-network-3d", only: :desktop)
 
     network.choose("2D")
     expect(network).to have_graph("2D")
     network.wait_for_layout
+    expect(network).to have_rendered_pixels("2D")
     screenshot_marker(label: "user-network-2d", only: :desktop)
 
     network.choose("Clusters")
@@ -94,5 +100,19 @@ RSpec.describe "Explore the user network" do
     expect(network).to have_focus("alex")
     network.wait_for_layout
     screenshot_marker(label: "user-network-search", only: :desktop)
+  end
+
+  it "lets a member view both dimensions on mobile", mobile: true do
+    network.open
+    expect(network).to have_graph("3D")
+    network.wait_for_layout
+    expect(network).to have_rendered_pixels("3D")
+    screenshot_marker(label: "user-network-mobile-3d", only: :mobile)
+
+    network.choose("2D")
+    expect(network).to have_graph("2D")
+    network.wait_for_layout
+    expect(network).to have_rendered_pixels("2D")
+    screenshot_marker(label: "user-network-mobile-2d", only: :mobile)
   end
 end

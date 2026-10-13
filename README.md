@@ -167,7 +167,7 @@ group sharing:
   least 80% of interactions with one counterpart. Parameters are adjustable.
   It reports incoming likes/replies, outgoing interactions, reciprocal
   counterparts, and the strongest counterpart's account age and trust level.
-  It excludes private messages, restricted categories, hidden/deleted posts,
+  It uses regular posts only, excluding whispers, private messages, restricted categories, hidden/deleted posts,
   self-interactions and staff candidates. It does not apply the graph's minimum
   trust level or weighted edge threshold, which could hide new users.
 
