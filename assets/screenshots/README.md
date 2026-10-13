@@ -16,6 +16,10 @@ Desktop and mobile tests inspect pixels from screenshots of the renderer itself
 (excluding the separate 3D label overlay), so an empty WebGL canvas fails even
 when username labels are present. The committed gallery remains desktop-only.
 
+Keep real WebGL interactions in these system tests: the QUnit CI browser cannot
+create a WebGL context. The desktop flow also verifies that 3D search retains
+the canvas and preserves selection and highlighting when switching to 2D.
+
 | File                   | View                                             |
 | ---------------------- | ------------------------------------------------ |
 | `network-3d.png`       | 3D, trust-level colours and legend.              |

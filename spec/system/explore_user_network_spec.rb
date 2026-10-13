@@ -87,8 +87,16 @@ RSpec.describe "Explore the user network" do
     expect(network).to have_rendered_pixels("3D")
     screenshot_marker(label: "user-network-3d", only: :desktop)
 
+    canvas = network.canvas
+    network.search("alex")
+    expect(network).to have_focus("alex")
+    expect(network.canvas).to eq(canvas)
+
     network.choose("2D")
     expect(network).to have_graph("2D")
+    expect(network).to have_focus("alex")
+    expect(network).to have_dimmed_user("zara")
+    network.search("")
     network.wait_for_layout
     expect(network).to have_rendered_pixels("2D")
     screenshot_marker(label: "user-network-2d", only: :desktop)

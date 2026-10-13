@@ -147,30 +147,4 @@ module("Integration | Component | Usernetworkvis", function (hooks) {
       .hasValue("4", "crossing minimum adjusts maximum");
     assert.dom(".user-network-vis__empty").exists("empty slices have feedback");
   });
-
-  test("3D search preserves the canvas and follows selection across dimensions", async function (assert) {
-    this.siteSettings.user_network_vis_default_view = "3d";
-    await render(<template><Usernetworkvis @model={{this.model}} /></template>);
-    await waitUntil(() => findAll(".user-network-vis__3d-label").length === 4);
-    const canvas = find(".user-network-vis canvas");
-    await fillIn(".user-network-vis__search input", "bob");
-    assert
-      .dom(".user-network-vis__search-result")
-      .hasText("bob", "3D search selects the username");
-    assert.strictEqual(
-      find(".user-network-vis canvas"),
-      canvas,
-      "search does not rebuild the canvas"
-    );
-    await click(
-      ".user-network-vis__toolbar-row--dimensions button:first-child"
-    );
-    await waitUntil(() => findAll(".nodes circle").length === 4);
-    assert
-      .dom(".user-network-vis__search-result")
-      .hasText("bob", "dimension changes retain selection");
-    assert
-      .dom(".nodes g:nth-child(2)")
-      .hasStyle({ opacity: "0.1" }, "selection is applied to the new renderer");
-  });
 });

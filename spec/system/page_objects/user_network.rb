@@ -15,6 +15,14 @@ module PageObjects
         fill_in("Find a username", with: username)
       end
 
+      def canvas
+        find(".user-network-vis canvas")
+      end
+
+      def has_dimmed_user?(username)
+        has_css?(".nodes g", text: username, style: { opacity: "0.1" })
+      end
+
       def has_focus?(username)
         has_css?(".user-network-vis__search-result", exact_text: username)
       end
