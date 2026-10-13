@@ -1,0 +1,15 @@
+name: Discourse Plugin
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: discourse/.github/.github/workflows/discourse-plugin.yml@v1

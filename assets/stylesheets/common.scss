@@ -1,9 +1,19 @@
+body.has-user-network-vis {
+  #main-outlet-wrapper {
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  #main-outlet {
+    min-width: 0;
+    padding-inline: 0;
+  }
+}
+
 .user-network-vis-container {
-  width: 100vw;
+  width: 100%;
   display: flex;
   justify-content: center;
-  margin-right: calc(50% - 50vw);
-  margin-left: calc(50% - 50vw);
   position: relative;
 }
 
@@ -11,6 +21,8 @@
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
+  width: 18rem;
+  max-width: calc(100% - 1rem);
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -20,11 +32,71 @@
 }
 
 .user-network-vis__toolbar-row {
-  display: flex;
-  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.user-network-vis__search {
+  width: 100%;
+  max-width: 100%;
+
+  input {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+}
+
+.user-network-vis__search-result {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 0.25rem;
+  background: var(--secondary);
+  color: var(--primary);
+  font-size: var(--font-down-1);
+}
+
+.user-network-vis__trust-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: var(--secondary);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    font-size: var(--font-down-1);
+    text-align: center;
+  }
+
+  select {
+    width: 100%;
+    text-align: start;
+  }
+}
+
+.user-network-vis__empty {
+  position: absolute;
+  top: 50%;
+  max-width: calc(100% - 2rem);
+  padding: 0.5rem;
+  background: var(--secondary);
+  color: var(--primary);
 }
 
 .user-network-vis__toolbar-row--dimensions {
+  margin-bottom: 0.25rem;
+}
+
+.user-network-vis__toolbar-row--colours {
   margin-bottom: 0.25rem;
 }
 
@@ -45,7 +117,9 @@
 }
 
 .user-network-vis__legend {
-  min-width: 9rem;
+  width: calc((100% - 0.5rem) / 2);
+  min-width: 0;
+  box-sizing: border-box;
   padding: 0.5rem;
   border: 1px solid var(--primary-low-mid);
   border-radius: 4px;
@@ -58,6 +132,7 @@
   align-items: center;
   gap: 0.35rem;
   line-height: var(--line-height-small);
+  overflow-wrap: anywhere;
 }
 
 .user-network-vis__legend-item + .user-network-vis__legend-item {

@@ -1,4 +1,12 @@
 en:
+  user_network_vis:
+    queries:
+      snapshot:
+        name: "User network: graph snapshot"
+        description: "Edges and weighted scores from the hourly cached graph, including its trust-level and activity filters. Username accepts SQL patterns (% means all users). Source and target follow the graph's stored convention, not a consistent actor/recipient direction. Empty until the graph job runs; isolated nodes are not included."
+      new_user_interactions:
+        name: "User network: concentrated new-user interactions"
+        description: "Review candidates, not evidence of shared identity or abuse. Counts recent public likes and direct replies, without graph score or trust-level filters. Each action counts once per participant. Top counterpart percentage includes both given and received interactions; reciprocal means activity in both directions, not matching types. Small legitimate groups may appear. Lookback is capped at 365 days."
   site_settings:
     user_network_vis_enabled: "Enable the User Network Visualisation plugin"
     user_network_vis_add_menu_item: "Add a menu item to the Sidebar/Dropdown menu for the User Network Visualisation"
