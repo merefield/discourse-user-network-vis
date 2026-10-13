@@ -1,6 +1,6 @@
 import Component from "@glimmer/component";
 import { tracked } from "@glimmer/tracking";
-import { concat } from "@ember/helper";
+import { concat, fn } from "@ember/helper";
 import { on } from "@ember/modifier";
 import didInsert from "@ember/render-modifiers/modifiers/did-insert";
 import willDestroy from "@ember/render-modifiers/modifiers/will-destroy";
@@ -382,8 +382,11 @@ export default class Usernetworkvis extends Component {
   }
 
   @bind
-  async toggleRelationshipClusters() {
-    this.clusterByRelationships = !this.clusterByRelationships;
+  async setRelationshipClusters(enabled) {
+    if (this.clusterByRelationships === enabled) {
+      return;
+    }
+    this.clusterByRelationships = enabled;
 
     if (!this.currentGraphData) {
       await this.renderGraph();
@@ -1015,20 +1018,40 @@ export default class Usernetworkvis extends Component {
             </button>
           </div>
 
-          <div class="user-network-vis__toolbar-row">
+          <div
+            class="user-network-vis__toolbar-row user-network-vis__toolbar-row--colours"
+            role="group"
+            aria-label={{i18n "user_network_vis.colours"}}
+          >
             <button
               type="button"
-              class="user-network-vis__toggle"
-              aria-pressed={{this.clusterByRelationships}}
-              title={{i18n "user_network_vis.colours_title"}}
-              {{on "click" this.toggleRelationshipClusters}}
+              class={{concat
+                "user-network-vis__toggle"
+                (if
+                  this.clusterByRelationships
+                  " user-network-vis__toggle--active"
+                )
+              }}
+              aria-pressed={{if this.clusterByRelationships "true" "false"}}
+              title={{i18n "user_network_vis.cluster_colours_title"}}
+              {{on "click" (fn this.setRelationshipClusters true)}}
             >
-              {{i18n "user_network_vis.colours"}}:
-              {{#if this.clusterByRelationships}}
-                {{i18n "user_network_vis.cluster_by_relationships"}}
-              {{else}}
-                {{i18n "user_network_vis.trust_level_colours"}}
-              {{/if}}
+              {{i18n "user_network_vis.cluster_by_relationships"}}
+            </button>
+            <button
+              type="button"
+              class={{concat
+                "user-network-vis__toggle"
+                (unless
+                  this.clusterByRelationships
+                  " user-network-vis__toggle--active"
+                )
+              }}
+              aria-pressed={{if this.clusterByRelationships "false" "true"}}
+              title={{i18n "user_network_vis.trust_level_colours_title"}}
+              {{on "click" (fn this.setRelationshipClusters false)}}
+            >
+              {{i18n "user_network_vis.trust_level_colours"}}
             </button>
           </div>
 

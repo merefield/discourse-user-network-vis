@@ -62,14 +62,30 @@ module("Integration | Component | Usernetworkvis", function (hooks) {
     assert
       .dom(".links line:first-child")
       .hasStyle({ opacity: "1" }, "leaving restores the search selection");
-    await click(
-      ".user-network-vis__toolbar-row:not(.user-network-vis__toolbar-row--dimensions) button"
-    );
+    await click(".user-network-vis__toolbar-row--colours button:first-child");
     assert.strictEqual(
       find(".nodes circle"),
       circles[0],
       "colour changes retain the graph nodes"
     );
+    assert
+      .dom(".user-network-vis__toolbar-row--colours button:first-child")
+      .hasAttribute("aria-pressed", "true", "clusters are selected");
+    assert
+      .dom(".user-network-vis__legend")
+      .doesNotExist("trust legend is hidden for clusters");
+    await click(".user-network-vis__toolbar-row--colours button:first-child");
+    assert
+      .dom(".user-network-vis__toolbar-row--colours button:first-child")
+      .hasAttribute(
+        "aria-pressed",
+        "true",
+        "clicking the selected mode keeps it selected"
+      );
+    await click(".user-network-vis__toolbar-row--colours button:last-child");
+    assert
+      .dom(".user-network-vis__legend")
+      .exists("trust colours restore the legend");
     await fillIn(input, "ALICIA");
     assert
       .dom(".user-network-vis__search-result")
