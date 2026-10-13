@@ -5,17 +5,9 @@ RSpec.describe Jobs::CreateUserNetworkExplorerQueries do
     it "leaves installation pending when Data Explorer is unavailable" do
       stub_const(Object, :DiscourseDataExplorer, Module.new) do
         described_class.new.execute_onceoff({})
+        expect(PluginStore.get(UserNetworkVis::PLUGIN_NAME, "explorer_query_snapshot")).to be_nil
         expect(
-          PluginStore.get(
-            UserNetworkVis::PLUGIN_NAME,
-            "explorer_query_snapshot"
-          )
-        ).to be_nil
-        expect(
-          PluginStore.get(
-            UserNetworkVis::PLUGIN_NAME,
-            "explorer_query_new_user_interactions"
-          )
+          PluginStore.get(UserNetworkVis::PLUGIN_NAME, "explorer_query_new_user_interactions"),
         ).to be_nil
       end
     end
@@ -35,7 +27,7 @@ RSpec.describe Jobs::CreateUserNetworkExplorerQueries do
       queries.last.destroy!
       expect { described_class.new.execute_onceoff({}) }.not_to change(
         DiscourseDataExplorer::Query,
-        :count
+        :count,
       )
       expect(queries.first.reload.sql).to eq("SELECT 42")
     end

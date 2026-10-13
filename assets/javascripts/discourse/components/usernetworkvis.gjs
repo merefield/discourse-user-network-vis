@@ -994,24 +994,24 @@ export default class Usernetworkvis extends Component {
             class="user-network-vis__toolbar-row user-network-vis__toolbar-row--dimensions"
           >
             <button
-              type="button"
+              aria-pressed={{this.is2D}}
               class={{concat
                 "user-network-vis__toggle"
                 (if this.is2D " user-network-vis__toggle--active")
               }}
-              aria-pressed={{this.is2D}}
+              type="button"
               {{on "click" this.show2D}}
             >
               {{i18n "user_network_vis.view_2d"}}
             </button>
 
             <button
-              type="button"
+              aria-pressed={{this.is3D}}
               class={{concat
                 "user-network-vis__toggle"
                 (if this.is3D " user-network-vis__toggle--active")
               }}
-              aria-pressed={{this.is3D}}
+              type="button"
               {{on "click" this.show3D}}
             >
               {{i18n "user_network_vis.view_3d"}}
@@ -1019,12 +1019,12 @@ export default class Usernetworkvis extends Component {
           </div>
 
           <div
+            aria-label={{i18n "user_network_vis.colours"}}
             class="user-network-vis__toolbar-row user-network-vis__toolbar-row--colours"
             role="group"
-            aria-label={{i18n "user_network_vis.colours"}}
           >
             <button
-              type="button"
+              aria-pressed={{if this.clusterByRelationships "true" "false"}}
               class={{concat
                 "user-network-vis__toggle"
                 (if
@@ -1032,14 +1032,14 @@ export default class Usernetworkvis extends Component {
                   " user-network-vis__toggle--active"
                 )
               }}
-              aria-pressed={{if this.clusterByRelationships "true" "false"}}
               title={{i18n "user_network_vis.cluster_colours_title"}}
+              type="button"
               {{on "click" (fn this.setRelationshipClusters true)}}
             >
               {{i18n "user_network_vis.cluster_by_relationships"}}
             </button>
             <button
-              type="button"
+              aria-pressed={{if this.clusterByRelationships "false" "true"}}
               class={{concat
                 "user-network-vis__toggle"
                 (unless
@@ -1047,8 +1047,8 @@ export default class Usernetworkvis extends Component {
                   " user-network-vis__toggle--active"
                 )
               }}
-              aria-pressed={{if this.clusterByRelationships "false" "true"}}
               title={{i18n "user_network_vis.trust_level_colours_title"}}
+              type="button"
               {{on "click" (fn this.setRelationshipClusters false)}}
             >
               {{i18n "user_network_vis.trust_level_colours"}}

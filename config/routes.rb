@@ -1,7 +1,5 @@
-Discourse::Application.routes.append do
-  mount ::UserNetworkVis::Engine, at: "/"
-end
+# frozen_string_literal: true
 
-UserNetworkVis::Engine.routes.draw do
-  get "usernetworkvis" => "user_network_stats#data"
-end
+Discourse::Application.routes.append { mount ::UserNetworkVis::Engine, at: "/" }
+
+UserNetworkVis::Engine.routes.draw { get "usernetworkvis" => "user_network_stats#data" }

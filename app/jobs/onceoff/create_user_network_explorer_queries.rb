@@ -13,13 +13,9 @@ module Jobs
           query =
             DiscourseDataExplorer::Query.create!(
               name: I18n.t("user_network_vis.queries.#{key}.name"),
-              description:
-                I18n.t("user_network_vis.queries.#{key}.description"),
-              sql:
-                File.read(
-                  File.expand_path("../../../queries/#{key}.sql", __dir__)
-                ),
-              user_id: Discourse::SYSTEM_USER_ID
+              description: I18n.t("user_network_vis.queries.#{key}.description"),
+              sql: File.read(File.expand_path("../../../queries/#{key}.sql", __dir__)),
+              user_id: Discourse::SYSTEM_USER_ID,
             )
           PluginStore.set(UserNetworkVis::PLUGIN_NAME, store_key, query.id)
         end
