@@ -1,0 +1,62 @@
+# frozen_string_literal: true
+
+module PageObjects
+  module Pages
+    class UserNetwork < Base
+      def open
+        visit("/usernetworkvis")
+      end
+
+      def choose(mode)
+        find(".user-network-vis__toolbar").click_button(mode, exact: true)
+      end
+
+      def search(username)
+        fill_in("Find a username", with: username)
+      end
+
+      def has_focus?(username)
+        has_css?(".user-network-vis__search-result", exact_text: username)
+      end
+
+      def has_graph?(dimensions)
+        if dimensions == "3D"
+          has_css?(".user-network-vis canvas") &&
+            has_css?(".user-network-vis__3d-label", minimum: 25)
+        else
+          has_css?(".user-network-vis svg circle", count: 25)
+        end
+      end
+
+      def wait_for_layout
+        # Wait for both the force simulation and the automatic camera fit.
+        page.driver.with_playwright_page do |browser|
+          browser.wait_for_function(<<~JS, timeout: 60_000)
+            () => {
+              const nodes = [...document.querySelectorAll(
+                '.user-network-vis__3d-label, .user-network-vis svg circle'
+              )];
+              const positions = nodes.map(node => {
+                const rect = node.getBoundingClientRect();
+                return [Math.round(rect.x), Math.round(rect.y)];
+              });
+              const value = JSON.stringify(positions);
+              const state = window.networkScreenshotLayout ||= {};
+              if (state.value !== value) {
+                state.value = value;
+                state.since = performance.now();
+              }
+              const canvas = document.querySelector('.user-network-vis canvas');
+              const bounds = canvas?.getBoundingClientRect();
+              const fitted = !bounds || positions.every(([x, y]) =>
+                x >= bounds.left && x <= bounds.right &&
+                y >= bounds.top && y <= bounds.bottom
+              );
+              return nodes.length === 25 && fitted && performance.now() - state.since > 1500;
+            }
+          JS
+        end
+      end
+    end
+  end
+end
