@@ -9,13 +9,21 @@ import { trustHTML } from "@ember/template";
 import { bind } from "discourse/lib/decorators";
 import loadScript from "discourse/lib/load-script";
 import DiscourseURL from "discourse/lib/url";
+import DFilterInput from "discourse/ui-kit/d-filter-input";
+import DNativeSelect from "discourse/ui-kit/d-native-select";
+import dUniqueId from "discourse/ui-kit/helpers/d-unique-id";
 import { i18n } from "discourse-i18n";
 
 export default class Usernetworkvis extends Component {
+  @service a11y;
   @service siteSettings;
 
   @tracked viewMode = this.siteSettings.user_network_vis_default_view;
   @tracked clusterByRelationships = false;
+  @tracked searchTerm = "";
+  @tracked selectedUsername = null;
+  @tracked minimumTrustLevel = 0;
+  @tracked maximumTrustLevel = 4;
 
   graphElement = null;
   currentGraphData = null;
@@ -28,6 +36,34 @@ export default class Usernetworkvis extends Component {
   lastGraphHeight = null;
   graphFitPadding = 96;
   graph3DFitPadding = 4;
+  searchListId = `network-users-${dUniqueId()}`;
+
+  #focusNode = null;
+  #highlightNode = null;
+  #simulation = null;
+  #updateVisibility = null;
+
+  get visibleNodes() {
+    return (this.network?.nodes ?? []).filter((node) =>
+      this.#nodeInRange(node)
+    );
+  }
+
+  get searchMatches() {
+    const term = this.searchTerm.trim().toLowerCase();
+    if (!term) {
+      return [];
+    }
+    return this.visibleNodes
+      .filter((node) => node.id.toLowerCase().includes(term))
+      .sort((first, second) => {
+        const rank = (node) => {
+          const username = node.id.toLowerCase();
+          return username === term ? 0 : username.startsWith(term) ? 1 : 2;
+        };
+        return rank(first) - rank(second) || first.id.localeCompare(second.id);
+      });
+  }
 
   get network() {
     return this.args.model?.results?.user_network_stats;
@@ -48,10 +84,54 @@ export default class Usernetworkvis extends Component {
   get trustLevelLegendItems() {
     return [0, 1, 2, 3, 4].map((trustLevel) => {
       return {
+        value: trustLevel,
         label: i18n("user_network_vis.trust_level", { trustLevel }),
         style: trustHTML(`background-color: ${this.nodeColor(trustLevel)}`),
       };
     });
+  }
+
+  @bind
+  clearSearch() {
+    this.searchTerm = "";
+    this.selectedUsername = null;
+    this.#highlightNode?.(null);
+  }
+
+  @bind
+  searchUsername(event) {
+    this.searchTerm = event.target.value;
+    this.selectedUsername = this.searchMatches[0]?.id ?? null;
+    this.#restoreSelection();
+    if (this.searchTerm.trim()) {
+      this.a11y.announce(
+        this.selectedUsername
+          ? i18n("user_network_vis.focused_user", {
+              username: this.selectedUsername,
+            })
+          : i18n("user_network_vis.no_matching_user")
+      );
+    }
+  }
+
+  @bind
+  changeMinimumTrustLevel(value) {
+    this.minimumTrustLevel = Number(value);
+    this.maximumTrustLevel = Math.max(
+      this.minimumTrustLevel,
+      this.maximumTrustLevel
+    );
+    this.#applyTrustLevelFilter();
+  }
+
+  @bind
+  changeMaximumTrustLevel(value) {
+    this.maximumTrustLevel = Number(value);
+    this.minimumTrustLevel = Math.min(
+      this.minimumTrustLevel,
+      this.maximumTrustLevel
+    );
+    this.#applyTrustLevelFilter();
   }
 
   async ensureD3() {
@@ -331,6 +411,11 @@ export default class Usernetworkvis extends Component {
 
   resetGraph() {
     this.cancel3DLabelUpdates();
+    this.#simulation?.stop();
+    this.#simulation = null;
+    this.#focusNode = null;
+    this.#highlightNode = null;
+    this.#updateVisibility = null;
 
     if (this.graph3D) {
       this.graph3D._destructor?.();
@@ -533,22 +618,25 @@ export default class Usernetworkvis extends Component {
       );
     };
 
-    const fade = (opacity) => {
-      return (_event, hoveredNode) => {
-        node.style("opacity", (otherNode) =>
-          isConnected(hoveredNode, otherNode) ? 1 : opacity
-        );
+    this.#highlightNode = (hoveredNode) => {
+      node.style("opacity", (otherNode) =>
+        !hoveredNode || isConnected(hoveredNode, otherNode) ? 1 : 0.1
+      );
 
-        link.style("opacity", (otherLink) => {
-          return otherLink.source.id === hoveredNode.id ||
-            otherLink.target.id === hoveredNode.id
-            ? 1
-            : opacity;
-        });
-      };
+      link.style("opacity", (otherLink) => {
+        return !hoveredNode ||
+          otherLink.source.id === hoveredNode.id ||
+          otherLink.target.id === hoveredNode.id
+          ? 1
+          : 0.1;
+      });
     };
 
-    node.on("mouseover", fade(0.1)).on("mouseout", fade(1));
+    node
+      .on("mouseover", (_event, hoveredNode) =>
+        this.#highlightNode(hoveredNode)
+      )
+      .on("mouseout", () => this.#highlightNode(this.#selectedNode()));
 
     node
       .append("circle")
@@ -597,8 +685,45 @@ export default class Usernetworkvis extends Component {
       });
 
     simulation.tick(300);
+    this.#simulation = simulation;
     updatePositions();
-    this.fit2DGraph(d3, svg, zoomBehavior, graphData.nodes, width, height);
+    this.#focusNode = (selectedNode) => {
+      const scale = d3.zoomTransform(svg.node()).k;
+      svg
+        .interrupt()
+        .transition()
+        .duration(200)
+        .call(
+          zoomBehavior.transform,
+          d3.zoomIdentity
+            .translate(
+              width / 2 - selectedNode.x * scale,
+              height / 2 - selectedNode.y * scale
+            )
+            .scale(scale)
+        );
+    };
+    this.#updateVisibility = () => {
+      const visibleIds = new Set(this.visibleNodes.map((item) => item.id));
+      node.style("display", (item) =>
+        visibleIds.has(item.id) ? null : "none"
+      );
+      link.style("display", (item) =>
+        visibleIds.has(item.source.id) && visibleIds.has(item.target.id)
+          ? null
+          : "none"
+      );
+      this.fit2DGraph(
+        d3,
+        svg,
+        zoomBehavior,
+        graphData.nodes.filter((item) => visibleIds.has(item.id)),
+        width,
+        height
+      );
+    };
+    this.#updateVisibility();
+    this.#restoreSelection();
 
     function dragstarted(event, data) {
       if (!event.active) {
@@ -666,13 +791,16 @@ export default class Usernetworkvis extends Component {
       .linkColor(linkColor)
       .linkOpacity(0.2)
       .onNodeHover((node) => {
-        hoveredNode = node;
-        graph.linkColor(linkColor);
+        this.#highlightNode?.(node ?? this.#selectedNode());
       })
       .onEngineStop(() => {
         if (!hasFitGraph) {
           hasFitGraph = true;
-          graph.zoomToFit(400, this.graph3DFitPadding);
+          if (this.selectedUsername) {
+            this.#restoreSelection();
+          } else {
+            this.#updateVisibility?.();
+          }
         }
       })
       .onNodeClick((node) => {
@@ -687,6 +815,42 @@ export default class Usernetworkvis extends Component {
       ?.strength(-this.siteSettings.user_network_vis_node_charge_strength);
 
     this.graph3D = graph;
+    this.#highlightNode = (node) => {
+      hoveredNode = node;
+      graph.linkColor(linkColor);
+    };
+    this.#focusNode = (node) => {
+      if (![node.x, node.y, node.z].every(Number.isFinite)) {
+        return;
+      }
+      const camera = graph.cameraPosition();
+      const target = graph.controls().target;
+      graph.cameraPosition(
+        {
+          x: node.x + camera.x - target.x,
+          y: node.y + camera.y - target.y,
+          z: node.z + camera.z - target.z,
+        },
+        node,
+        200
+      );
+    };
+    this.#updateVisibility = () => {
+      const visibleIds = new Set(this.visibleNodes.map((node) => node.id));
+      graph.nodeVisibility((node) => visibleIds.has(node.id));
+      graph.linkVisibility(
+        (link) =>
+          visibleIds.has(nodeId(link.source)) &&
+          visibleIds.has(nodeId(link.target))
+      );
+      if (visibleIds.size && hasFitGraph && !this.selectedUsername) {
+        graph.zoomToFit(400, this.graph3DFitPadding, (node) =>
+          visibleIds.has(node.id)
+        );
+      }
+    };
+    this.#updateVisibility();
+    this.#restoreSelection();
     this.create3DLabels(graph, graphData);
   }
 
@@ -713,6 +877,7 @@ export default class Usernetworkvis extends Component {
 
       labels.forEach(({ label, node }) => {
         if (
+          !this.#nodeInRange(node) ||
           [node.x, node.y, node.z].some((position) => position === undefined)
         ) {
           label.hidden = true;
@@ -730,10 +895,98 @@ export default class Usernetworkvis extends Component {
     updateLabels();
   }
 
+  #selectedNode() {
+    return (
+      this.currentGraphData?.nodes.find(
+        (node) => node.id === this.selectedUsername
+      ) ?? null
+    );
+  }
+
+  #nodeInRange(node) {
+    return (
+      node.group >= this.minimumTrustLevel &&
+      node.group <= this.maximumTrustLevel
+    );
+  }
+
+  #applyTrustLevelFilter() {
+    this.selectedUsername = this.searchMatches[0]?.id ?? null;
+    this.#updateVisibility?.();
+    this.#restoreSelection();
+  }
+
+  #restoreSelection() {
+    const node = this.#selectedNode();
+    this.#highlightNode?.(node);
+    if (node) {
+      this.#focusNode?.(node);
+    }
+  }
+
   <template>
     {{#if this.hasItems}}
       <div class="user-network-vis-container">
         <div class="user-network-vis__toolbar">
+          <div class="user-network-vis__search">
+            <DFilterInput
+              aria-label={{i18n "user_network_vis.search"}}
+              list={{this.searchListId}}
+              placeholder={{i18n "user_network_vis.search"}}
+              type="search"
+              @filterAction={{this.searchUsername}}
+              @onClearInput={{this.clearSearch}}
+              @value={{this.searchTerm}}
+            />
+            <datalist id={{this.searchListId}}>
+              {{#each this.searchMatches as |node|}}
+                <option value={{node.id}}></option>
+              {{/each}}
+            </datalist>
+            {{#if this.searchTerm}}
+              <span class="user-network-vis__search-result">
+                {{#if this.selectedUsername}}
+                  {{this.selectedUsername}}
+                {{else}}
+                  {{i18n "user_network_vis.no_matching_user"}}
+                {{/if}}
+              </span>
+            {{/if}}
+          </div>
+          <div class="user-network-vis__trust-filters">
+            <label>
+              {{i18n "user_network_vis.minimum_trust_level"}}
+              <DNativeSelect
+                class="user-network-vis__minimum-trust-level"
+                @includeNone={{false}}
+                @onChange={{this.changeMinimumTrustLevel}}
+                @value={{this.minimumTrustLevel}}
+                as |select|
+              >
+                {{#each this.trustLevelLegendItems as |item|}}
+                  <select.Option
+                    @value={{item.value}}
+                  >{{item.label}}</select.Option>
+                {{/each}}
+              </DNativeSelect>
+            </label>
+            <label>
+              {{i18n "user_network_vis.maximum_trust_level"}}
+              <DNativeSelect
+                class="user-network-vis__maximum-trust-level"
+                @includeNone={{false}}
+                @onChange={{this.changeMaximumTrustLevel}}
+                @value={{this.maximumTrustLevel}}
+                as |select|
+              >
+                {{#each this.trustLevelLegendItems as |item|}}
+                  <select.Option
+                    @value={{item.value}}
+                  >{{item.label}}</select.Option>
+                {{/each}}
+              </DNativeSelect>
+            </label>
+          </div>
           <div
             class="user-network-vis__toolbar-row user-network-vis__toolbar-row--dimensions"
           >
@@ -799,6 +1052,11 @@ export default class Usernetworkvis extends Component {
           {{didInsert this.setup}}
           {{willDestroy this.teardown}}
         ></div>
+        {{#unless this.visibleNodes.length}}
+          <div class="user-network-vis__empty">{{i18n
+              "user_network_vis.no_users_in_range"
+            }}</div>
+        {{/unless}}
       </div>
     {{/if}}
   </template>
